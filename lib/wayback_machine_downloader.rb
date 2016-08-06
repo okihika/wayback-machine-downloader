@@ -131,6 +131,7 @@ class WaybackMachineDownloader
       return
     end
     count = 0
+    ret_val = ""
     file_list_by_timestamp.each do |file_remote_info|
       count += 1
       file_url = file_remote_info[:file_url]
@@ -156,6 +157,7 @@ class WaybackMachineDownloader
           open(file_path, "wb") do |file|
             begin
               open("http://web.archive.org/web/#{file_timestamp}id_/#{file_url}", "Accept-Encoding" => "plain") do |uri|
+                ret_val = uri.read
                 file.write(uri.read)
               end
             rescue OpenURI::HTTPError => e
@@ -171,10 +173,14 @@ class WaybackMachineDownloader
         puts "#{file_url} -> #{file_path} (#{count}/#{file_list_by_timestamp.size})"
       else
         puts "#{file_url} # #{file_path} already exists. (#{count}/#{file_list_by_timestamp.size})"
+        File.open(file_path) do |file|
+          return file.read
+        end
       end
     end
     puts
     puts "Download complete, saved in #{backup_path} (#{file_list_by_timestamp.size} files)"
+    return ret_val
   end
 
   def structure_dir_path dir_path
